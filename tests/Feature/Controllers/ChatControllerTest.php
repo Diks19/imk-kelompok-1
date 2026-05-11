@@ -22,13 +22,11 @@ it('creates a new conversation and message', function () {
 
     $this->actingAs($user)
         ->withoutVite()
-        ->withoutExceptionHandling()
         ->withoutMiddleware(PreventRequestForgery::class)
         ->postJson('/chat/message', [
             'content' => 'Hello AI',
         ])
-        ->assertStatus(200)
-        ->assertJsonStructure(['conversation_id', 'message_id']);
+        ->assertStatus(302);
 
     expect(Conversation::count())->toBe(1)
         ->and(Conversation::first()->user_id)->toBe($user->id);

@@ -19,7 +19,7 @@
 - Create: `app/Models/Attachment.php`
 - Create: `tests/Feature/Models/ChatModelsTest.php`
 
-- [ ] **Step 1: Write the failing test for models**
+- [x] **Step 1: Write the failing test for models**
 
 ```php
 // tests/Feature/Models/ChatModelsTest.php
@@ -61,12 +61,12 @@ it('can create a conversation with messages and attachments', function () {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test --compact tests/Feature/Models/ChatModelsTest.php`
 Expected: FAIL with "Class 'App\Models\Conversation' not found"
 
-- [ ] **Step 3: Create Migrations**
+- [x] **Step 3: Create Migrations**
 
 ```php
 // database/migrations/2026_04_28_000000_create_chat_tables.php
@@ -115,7 +115,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] **Step 4: Create Models**
+- [x] **Step 4: Create Models**
 
 ```php
 // app/Models/Conversation.php
@@ -189,13 +189,13 @@ class Attachment extends Model
 }
 ```
 
-- [ ] **Step 5: Run migrations and test to verify it passes**
+- [x] **Step 5: Run migrations and test to verify it passes**
 
 Run: `php artisan migrate`
 Run: `php artisan test --compact tests/Feature/Models/ChatModelsTest.php`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add database/migrations app/Models tests/Feature/Models
@@ -209,7 +209,7 @@ git commit -m "feat: add database migrations and models for chat"
 - Create: `app/Events/MessageTokenStreamed.php`
 - Create: `tests/Feature/Events/MessageTokenStreamedTest.php`
 
-- [ ] **Step 1: Write failing test for the event**
+- [x] **Step 1: Write failing test for the event**
 
 ```php
 // tests/Feature/Events/MessageTokenStreamedTest.php
@@ -241,12 +241,12 @@ it('dispatches the token streamed event to the correct channel', function () {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test --compact tests/Feature/Events/MessageTokenStreamedTest.php`
 Expected: FAIL
 
-- [ ] **Step 3: Create the Event**
+- [x] **Step 3: Create the Event**
 
 ```php
 // app/Events/MessageTokenStreamed.php
@@ -284,7 +284,7 @@ class MessageTokenStreamed implements ShouldBroadcastNow
 }
 ```
 
-- [ ] **Step 4: Update Reverb config in routes/channels.php**
+- [x] **Step 4: Update Reverb config in routes/channels.php**
 
 ```php
 // routes/channels.php (Append this to the file)
@@ -299,12 +299,12 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
 });
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `php artisan test --compact tests/Feature/Events/MessageTokenStreamedTest.php`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/Events routes/channels.php tests/Feature/Events
@@ -317,7 +317,7 @@ git commit -m "feat: add message token streaming event and broadcast channel"
 - Create: `app/Services/OllamaService.php`
 - Create: `tests/Feature/Services/OllamaServiceTest.php`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```php
 // tests/Feature/Services/OllamaServiceTest.php
@@ -338,12 +338,12 @@ it('calls the ollama generate api', function () {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test --compact tests/Feature/Services/OllamaServiceTest.php`
 Expected: FAIL
 
-- [ ] **Step 3: Implement OllamaService**
+- [x] **Step 3: Implement OllamaService**
 
 ```php
 // app/Services/OllamaService.php
@@ -375,12 +375,12 @@ class OllamaService
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `php artisan test --compact tests/Feature/Services/OllamaServiceTest.php`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/Services tests/Feature/Services
@@ -394,7 +394,7 @@ git commit -m "feat: add Ollama service integration"
 - Modify: `routes/web.php`
 - Create: `tests/Feature/Controllers/ChatControllerTest.php`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```php
 // tests/Feature/Controllers/ChatControllerTest.php
@@ -429,12 +429,12 @@ it('creates a new conversation and message', function () {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test --compact tests/Feature/Controllers/ChatControllerTest.php`
 Expected: FAIL
 
-- [ ] **Step 3: Create Controller**
+- [x] **Step 3: Create Controller**
 
 ```php
 // app/Http/Controllers/ChatController.php
@@ -499,7 +499,7 @@ class ChatController extends Controller
 }
 ```
 
-- [ ] **Step 4: Register Routes**
+- [x] **Step 4: Register Routes**
 
 ```php
 // routes/web.php (Append this)
@@ -511,12 +511,12 @@ Route::middleware(['auth'])->group(function () {
 });
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `php artisan test --compact tests/Feature/Controllers/ChatControllerTest.php`
 (Note: Inertia renders might need the page to exist, so we'll mock the view or create a placeholder if needed. Since Inertia testing just checks the response is 200, it should pass).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/Http/Controllers routes/web.php tests/Feature/Controllers
@@ -528,7 +528,7 @@ git commit -m "feat: add chat controller and routes"
 **Files:**
 - Create: `resources/js/pages/chat/index.tsx`
 
-- [ ] **Step 1: Build the UI Component**
+- [x] **Step 1: Build the UI Component**
 
 ```tsx
 // resources/js/pages/chat/index.tsx
@@ -631,7 +631,7 @@ export default function ChatIndex({ conversations, currentConversation, messages
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add resources/js/pages/chat/index.tsx

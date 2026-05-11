@@ -17,9 +17,16 @@ Route::prefix('{current_team}')
     });
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/chat/test-event', function (\Illuminate\Http\Request $request) {
+        \App\Events\MessageTokenStreamed::dispatch(999, 'this is a test token', 16);
+        return 'Event dispatched';
+    });
     Route::get('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::get('/chat/{conversation?}', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat/message', [ChatController::class, 'storeMessage'])->name('chat.message.store');
+    Route::patch('/chat/{conversation}/model', [ChatController::class, 'updateModel'])->name('chat.model.update');
+    Route::patch('/chat/{conversation}/title', [ChatController::class, 'rename'])->name('chat.rename');
+    Route::delete('/chat/{conversation}', [ChatController::class, 'destroy'])->name('chat.destroy');
 });
 
 require __DIR__.'/settings.php';

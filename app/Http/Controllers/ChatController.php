@@ -19,23 +19,31 @@ class ChatController extends Controller
             ->latest('updated_at')
             ->get();
 
-        $messages = $conversation ? $conversation->messages()->oldest()->get() : [];
+        $messages = $conversation ? $conversation->messages()->with('attachments')->oldest()->get() : [];
 
-        return Inertia::render('Chat/Index', [
+        $ollama = new \App\Services\OllamaService();
+        $availableModels = $ollama->listModels();
+
+        \Illuminate\Support\Facades\Log::info('Available models count: ' . count($availableModels));
+
+        return Inertia::render('chat/index', [
             'conversations' => $conversations,
             'currentConversation' => $conversation,
             'messages' => $messages,
+            'availableModels' => $availableModels,
         ]);
     }
 
     public function storeMessage(Request $request)
     {
         $request->validate([
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'conversation_id' => [
                 'nullable',
                 \Illuminate\Validation\Rule::exists('conversations', 'id')->where('user_id', $request->user()->id),
             ],
+            'image' => 'nullable|file|max:10240', // 10MB limit
+            'model' => 'nullable|string',
         ]);
 
         $conversationId = $request->conversation_id;
@@ -44,6 +52,7 @@ class ChatController extends Controller
             $conversation = Conversation::create([
                 'user_id' => $request->user()->id,
                 'title' => 'New Chat',
+                'model' => $request->model ?? config('services.ollama.model', 'deepseek-r1:8b'),
             ]);
             $conversationId = $conversation->id;
         }
@@ -55,12 +64,70 @@ class ChatController extends Controller
             'type' => 'text',
         ]);
 
-        // Here we would typically dispatch a job to stream the AI response
-        // For now, we return the IDs so the frontend can subscribe and listen
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $path = $file->store('attachments', 'public');
+            $attachment = \App\Models\Attachment::create([
+                'message_id' => $userMessage->id,
+                'path' => '/storage/'.$path,
+                'original_name' => $file->getClientOriginalName(),
+                'type' => 'uploaded_vision',
+            ]);
 
-        return response()->json([
-            'conversation_id' => $conversationId,
-            'message_id' => $userMessage->id,
+            // Dispatch RAG processing if it's a document (not an image)
+            $extension = strtolower($file->getClientOriginalExtension());
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
+                \App\Jobs\ProcessDocumentForRAG::dispatch($attachment->id);
+            }
+        }
+
+        \App\Jobs\RespondToChat::dispatch($conversationId);
+
+        return redirect()->route('chat.index', $conversationId);
+    }
+
+    public function updateModel(Request $request, Conversation $conversation)
+    {
+        if ($conversation->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'model' => 'required|string',
         ]);
+
+        $conversation->update([
+            'model' => $request->model,
+        ]);
+
+        return back();
+    }
+
+    public function rename(Request $request, Conversation $conversation)
+    {
+        if ($conversation->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $conversation->update([
+            'title' => $request->title,
+        ]);
+
+        return back();
+    }
+
+    public function destroy(Request $request, Conversation $conversation)
+    {
+        if ($conversation->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $conversation->delete();
+
+        return redirect()->route('chat.index');
     }
 }
