@@ -32,7 +32,13 @@ class RespondToChat implements ShouldQueue
     {
         Log::info('Responding to chat', ['conversation_id' => $this->conversationId]);
         
-        $conversation = Conversation::with(['messages', 'messages.attachments', 'messages.attachments.documentChunks'])->findOrFail($this->conversationId);
+        $conversation = Conversation::with(['messages', 'messages.attachments', 'messages.attachments.documentChunks'])->find($this->conversationId);
+        
+        if (!$conversation) {
+            Log::warning('Conversation not found, it may have been deleted.', ['conversation_id' => $this->conversationId]);
+            return;
+        }
+
         $lastUserMessage = $conversation->messages->where('role', 'user')->last();
         $model = $conversation->model ?? config('services.ollama.model', 'deepseek-r1:8b');
 
@@ -98,8 +104,20 @@ class RespondToChat implements ShouldQueue
         // Inject RAG context into the latest user message
         if (!empty($ragContext)) {
             $lastIdx = count($messages) - 1;
-            $messages[$lastIdx]['content'] = "Using the following context, please answer the user's question.\n\n" . $ragContext . "\n\nUser Question: " . $messages[$lastIdx]['content'];
+            $messages[$lastIdx]['content'] = "Relevant Context:\n" . $ragContext . "\n\nUser Question: " . $messages[$lastIdx]['content'];
         }
+
+        // Add a proper system instruction at the beginning
+        array_unshift($messages, [
+            'role' => 'system',
+            'content' => 'You are a helpful AI assistant. Provide detailed guides and explanations.'
+        ]);
+
+        // AGGRESSIVE FORMATTING INSTRUCTION (at the end for maximum influence)
+        $messages[] = [
+            'role' => 'user',
+            'content' => "[SYSTEM INSTRUCTION]: Provide a detailed and helpful response. If you provide code, you MUST use Markdown code blocks with the correct language tag (e.g. ```python). Do not be concise; be comprehensive."
+        ];
 
         $assistantMessage = Message::create([
             'conversation_id' => $conversation->id,

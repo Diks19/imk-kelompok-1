@@ -21,8 +21,14 @@ class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
 
         URL::defaults(['current_team' => $team->slug]);
 
+        if ($user && $user->isAdmin()) {
+            return $request->wantsJson()
+                ? new JsonResponse(['two_factor' => false], 200)
+                : redirect()->intended("/{$team->slug}".Fortify::redirects('login'));
+        }
+
         return $request->wantsJson()
             ? new JsonResponse(['two_factor' => false], 200)
-            : redirect()->intended("/{$team->slug}".Fortify::redirects('login'));
+            : redirect()->intended('/chat');
     }
 }

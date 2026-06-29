@@ -1,39 +1,38 @@
 import { Head } from '@inertiajs/react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import { dashboard } from '@/routes';
+import AppLayout from '@/layouts/app-layout';
 
-export default function Dashboard() {
+export default function Dashboard({ stats }: { stats: { users: number, conversations: number, messages: number, attachments: number } }) {
     return (
         <>
             <Head title="Dashboard" />
-            <header className="h-14 border-b border-zinc-900 flex items-center px-8 shrink-0">
-                <h1 className="text-zinc-100 font-medium text-sm">Dashboard</h1>
-            </header>
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
+            <div className="flex h-full flex-1 flex-col gap-8 p-8 max-w-6xl mx-auto w-full">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+                    <p className="text-muted-foreground">Welcome back, Admin. Here's a quick overview of your LarAI instance.</p>
                 </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-card border border-border p-6 rounded-2xl shadow-sm flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Users</h3>
+                        <p className="text-5xl font-black text-foreground">{stats.users}</p>
+                    </div>
+                    
+                    <div className="bg-card border border-border p-6 rounded-2xl shadow-sm flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Chats</h3>
+                        <p className="text-5xl font-black text-foreground">{stats.conversations}</p>
+                    </div>
+
+                    <div className="bg-card border border-border p-6 rounded-2xl shadow-sm flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Messages</h3>
+                        <p className="text-5xl font-black text-foreground">{stats.messages}</p>
+                    </div>
+
+                    <div className="bg-card border border-border p-6 rounded-2xl shadow-sm flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Files Processed</h3>
+                        <p className="text-5xl font-black text-foreground">{stats.attachments}</p>
+                    </div>
                 </div>
             </div>
         </>
     );
 }
-
-Dashboard.layout = (props: { currentTeam?: { slug: string } | null }) => ({
-    breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: props.currentTeam ? dashboard(props.currentTeam.slug) : '/',
-        },
-    ],
-});

@@ -47,6 +47,7 @@ class ChatController extends Controller
         ]);
 
         $conversationId = $request->conversation_id;
+        $conversation = null;
 
         if (! $conversationId) {
             $conversation = Conversation::create([
@@ -55,6 +56,8 @@ class ChatController extends Controller
                 'model' => $request->model ?? config('services.ollama.model', 'deepseek-r1:8b'),
             ]);
             $conversationId = $conversation->id;
+        } else {
+            $conversation = Conversation::find($conversationId);
         }
 
         $userMessage = Message::create([
@@ -83,7 +86,7 @@ class ChatController extends Controller
 
         \App\Jobs\RespondToChat::dispatch($conversationId);
 
-        return redirect()->route('chat.index', $conversationId);
+        return redirect()->route('chat.index', $conversation->slug);
     }
 
     public function updateModel(Request $request, Conversation $conversation)

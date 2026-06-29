@@ -1,7 +1,9 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Attachment {
     id: number;
@@ -24,16 +26,13 @@ interface MessageListProps {
 function ThoughtBlock({ thoughts, isStreaming }: { thoughts: string, isStreaming?: boolean }) {
     const [isOpen, setIsOpen] = useState(true);
 
+    // Auto-fold logic: Open while streaming, close when done.
     useEffect(() => {
-        if (!isStreaming) {
-            setIsOpen(false);
-        } else {
-            setIsOpen(true);
-        }
+        setIsOpen(!!isStreaming);
     }, [isStreaming]);
 
     return (
-        <div className="w-full mb-2 animate-in fade-in duration-500">
+        <div className="w-full mb-4 animate-in fade-in duration-500">
             <button 
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 px-3 py-2 bg-zinc-200 dark:bg-zinc-900/30 hover:bg-zinc-300 dark:hover:bg-zinc-900/50 rounded-lg border border-zinc-300 dark:border-zinc-800/50 transition-colors w-full group text-left"
@@ -77,7 +76,6 @@ export function MessageList({ messages }: MessageListProps) {
         
         // Find all completed thought blocks
         const allCompletedThoughts: string[] = [];
-        let tempContent = content;
         const thinkRegex = /<think>([\s\S]*?)<\/think>/gi;
         let match;
         
@@ -85,10 +83,7 @@ export function MessageList({ messages }: MessageListProps) {
             allCompletedThoughts.push(match[1].trim());
         }
 
-        // Remove all completed tags from the final view
         const finalContentCleaned = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-        
-        // Handle a potential ongoing/streaming thought at the very end
         const openThinkMatch = finalContentCleaned.match(/<think>([\s\S]*)$/i);
         
         let thoughts = allCompletedThoughts.length > 0 ? allCompletedThoughts.join('\n\n---\n\n') : null;
@@ -104,7 +99,6 @@ export function MessageList({ messages }: MessageListProps) {
 
         if (finalContent === '') finalContent = null;
 
-        // Catch edge case where just "<think" comes through from a partial chunk
         if (!isStreamingThoughts && finalContent && finalContent.trim().startsWith('<thin') && !finalContent.includes('>')) {
              return { thoughts, finalContent: null, isStreamingThoughts: true };
         }
@@ -113,7 +107,7 @@ export function MessageList({ messages }: MessageListProps) {
     };
 
     return (
-        <div className="space-y-6 pb-4">
+        <div className="space-y-8 pb-4">
             {messages.map((msg) => {
                 const { thoughts, finalContent, isStreamingThoughts } = parseContent(msg.content);
                 
@@ -126,11 +120,11 @@ export function MessageList({ messages }: MessageListProps) {
                         )}
                     >
                         <div className={cn(
-                            "max-w-[85%] md:max-w-full space-y-1 w-full",
+                            "max-w-[85%] md:max-w-full space-y-2 w-full",
                             msg.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start"
                         )}>
                             {msg.attachments && msg.attachments.length > 0 && (
-                                <div className="grid grid-cols-1 gap-2 mb-1">
+                                <div className="grid grid-cols-1 gap-2 mb-2">
                                     {msg.attachments.map((att) => (
                                         <div key={att.id}>
                                             {att.path.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) || att.path.startsWith('http') ? (
@@ -175,12 +169,87 @@ export function MessageList({ messages }: MessageListProps) {
                                     <div className={cn(
                                         msg.role === 'user' 
                                             ? "bg-purple-600 dark:bg-zinc-800 text-white dark:text-zinc-100 rounded-3xl px-5 py-3 text-base shadow-sm max-w-xl" 
-                                            : "text-zinc-800 dark:text-zinc-100 prose prose-p:leading-relaxed prose-pre:bg-zinc-100 prose-pre:border prose-pre:border-zinc-200 dark:prose-invert dark:prose-pre:bg-zinc-900 dark:prose-pre:border-zinc-800 max-w-none prose-base pt-1 font-serif"
+                                            : "text-zinc-800 dark:text-zinc-100 prose prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none dark:prose-invert max-w-none prose-base pt-1 font-serif w-full overflow-hidden"
                                     )}>
                                         {msg.role === 'user' ? (
                                             <p className="leading-relaxed whitespace-pre-wrap">{finalContent}</p>
                                         ) : (
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            <ReactMarkdown 
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    pre({ children }) {
+                                                        return <span className="not-prose block">{children}</span>;
+                                                    },
+                                                    code({ node, inline, className, children, ...props }: any) {
+                                                        const match = /language-(\w+)/.exec(className || '');
+                                                        const lang = match ? match[1] : 'text';
+                                                        const [copied, setCopied] = useState(false);
+
+                                                        const handleCopy = () => {
+                                                            navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+                                                            setCopied(true);
+                                                            setTimeout(() => setCopied(false), 2000);
+                                                        };
+
+                                                        if (!inline) {
+                                                            return (
+                                                                <span className="my-6 rounded-md overflow-hidden bg-black shadow-md border border-zinc-200 dark:border-zinc-800 font-sans not-prose w-full block">
+                                                                    <span className="flex items-center justify-between px-4 py-2 bg-[#2f2f2f] text-[#b4b4b4]">
+                                                                        <span className="text-xs font-medium lowercase">
+                                                                            {lang}
+                                                                        </span>
+                                                                        <button 
+                                                                            onClick={handleCopy}
+                                                                            className="flex items-center gap-1.5 text-xs hover:text-white transition-colors"
+                                                                        >
+                                                                            {copied ? (
+                                                                                <>
+                                                                                    <Check className="size-3.5 text-green-500" />
+                                                                                    <span>Copied!</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Copy className="size-3.5" />
+                                                                                    <span>Copy code</span>
+                                                                                </>
+                                                                            )}
+                                                                        </button>
+                                                                    </span>
+                                                                    <span className="overflow-x-auto bg-black p-4 block">
+                                                                        <SyntaxHighlighter
+                                                                            {...props}
+                                                                            style={vscDarkPlus}
+                                                                            language={lang}
+                                                                            PreTag="span"
+                                                                            customStyle={{
+                                                                                margin: 0,
+                                                                                padding: 0,
+                                                                                fontSize: '0.875rem',
+                                                                                lineHeight: '1.5',
+                                                                                background: 'transparent',
+                                                                                display: 'block',
+                                                                            }}
+                                                                            codeTagProps={{
+                                                                                style: {
+                                                                                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            {String(children).replace(/\n$/, '')}
+                                                                        </SyntaxHighlighter>
+                                                                    </span>
+                                                                </span>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <code className={cn("bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-purple-600 dark:text-purple-400 font-sans text-sm", className)} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        );
+                                                    }
+                                                }}
+                                            >
                                                 {finalContent}
                                             </ReactMarkdown>
                                         )}

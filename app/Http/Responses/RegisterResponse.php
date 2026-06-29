@@ -21,8 +21,14 @@ class RegisterResponse implements RegisterResponseContract
 
         URL::defaults(['current_team' => $team->slug]);
 
+        if ($user && $user->isAdmin()) {
+            return $request->wantsJson()
+                ? new JsonResponse(['two_factor' => false], 201)
+                : redirect()->intended("/{$team->slug}".Fortify::redirects('register'));
+        }
+
         return $request->wantsJson()
             ? new JsonResponse(['two_factor' => false], 201)
-            : redirect()->intended("/{$team->slug}".Fortify::redirects('register'));
+            : redirect()->intended('/chat');
     }
 }

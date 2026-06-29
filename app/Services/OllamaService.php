@@ -49,7 +49,7 @@ class OllamaService
         $finishedThinking = false;
 
         while (!$body->eof()) {
-            $chunk = $body->read(1024);
+            $chunk = $body->read(1);
             $buffer .= $chunk;
 
             while (($pos = strpos($buffer, "\n")) !== false) {

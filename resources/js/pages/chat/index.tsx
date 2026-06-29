@@ -10,6 +10,7 @@ import { Moon, Sun } from 'lucide-react';
 interface Conversation {
     id: number;
     title: string;
+    slug: string;
 }
 
 interface Message {
@@ -46,7 +47,7 @@ export default function ChatIndex({ currentConversation, messages: initialMessag
         setSelectedModel(newModel);
         
         if (currentConversation) {
-            router.patch(`/chat/${currentConversation.id}/model`, {
+            router.patch(`/chat/${currentConversation.slug}/model`, {
                 model: newModel
             }, {
                 preserveScroll: true

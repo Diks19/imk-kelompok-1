@@ -10,6 +10,20 @@ class Conversation extends Model
 {
     protected $guarded = [];
 
+    protected static function booted()
+    {
+        static::creating(function ($conversation) {
+            if (empty($conversation->slug)) {
+                $conversation->slug = \Illuminate\Support\Str::uuid()->toString();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
